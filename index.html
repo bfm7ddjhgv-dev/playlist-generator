@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>アーティスト単位 プレイリストジェネレーター（v4.3）</title>
+  <style>
+    :root,
+    [data-theme="light"] {
+      --bg: #eaeff5;
+      --panel: #ffffff;
+      --panel-2: #e3e9f2;
+      --hover: #d6dfec;
+      --text: #131922;
+      --muted: #526075;
+      --accent: #E64A19;
+      --accent-hover: #d84315;
+      --btn-primary: #1976D2;
+      --btn-primary-hover: #1565C0;
+      --accent-soft: #dceafb;
+      --accent-soft-border: #8abdf2;
+      --accent-soft-text: #0d47a1;
+      --border: #ccd6e4;
+      --tag-bg: #e1ecfa;
+      --tag-border: #b0ccee;
+      --tag-text: #15437a;
+      --badge-bg: #dce3ed;
+      --badge-text: #334155;
+      --danger-border: #eababa;
+      --danger-text: #c62828;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0e1218;
+      --panel: #161c24;
+      --panel-2: #1e2632;
+      --hover: #273242;
+      --text: #e2e8f0;
+      --muted: #8b98aa;
+      --accent: #E64A19;
+      --accent-hover: #f4511e;
+      --btn-primary: #2b579a;
+      --btn-primary-hover: #234780;
+      --accent-soft: #182334;
+      --accent-soft-border: #2c4366;
+      --accent-soft-text: #8ab0e6;
+      --border: #2a3444;
+      --tag-bg: #1b273b;
+      --tag-border: #2f4569;
+      --tag-text: #a5c3ec;
+      --badge-bg: #263142;
+      --badge-text: #b8c4d4;
+      --danger-border: #52282e;
+      --danger-text: #e07a84;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px 16px 76px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    h1 {
+      font-size: 1.3rem;
+      margin: 0 0 4px;
+    }
+    .sub {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin: 0;
+    }
+    .header-controls {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .nav-tab {
+      background: var(--accent-soft);
+      border: 1.5px solid var(--accent-soft-border);
+      color: var(--accent-soft-text);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .nav-tab:hover {
+      background: var(--hover);
+    }
+    .nav-tab.active {
+      background: var(--btn-primary);
+      border-color: var(--btn-primary);
+      color: #fff;
+    }
+    .theme-toggle {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .theme-toggle:hover {
+      background: var(--hover);
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 0.96rem;
+      font-weight: 700;
+      margin: 0 0 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    input[type="text"], input[type="number"], input[type="url"] {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 0.92rem;
+    }
+    input[type="text"], input[type="url"] { flex: 1; min-width: 180px; }
+    input[type="number"] { width: 92px; }
+    button {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    button:hover:not(:disabled) { background: var(--hover); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.primary {
+      background: var(--btn-primary);
+      border-color: var(--btn-primary);
+      color: #fff;
+    }
+    button.primary:hover:not(:disabled) { background: var(--btn-primary-hover); }
+    button.small {
+      padding: 6px 10px;
+      font-size: 0.8rem;
+    }
+    button.danger {
+      background: transparent;
+      border-color: var(--danger-border);
+      color: var(--danger-text);
+      padding: 6px 10px;
+      font-size: 0.8rem;
+    }
+    button.danger:hover:not(:disabled) {
+      background: var(--hover);
+    }
+
+    /* 配分モードセグメントボタン */
+    .segment-group {
+      display: inline-flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .segment-btn {
+      background: var(--accent-soft);
+      border: 1.5px solid var(--accent-soft-border);
+      color: var(--accent-soft-text);
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .segment-btn:hover {
+      filter: brightness(0.97);
+    }
+    .segment-btn.active {
+      background: var(--btn-primary);
+      border: 2px solid var(--btn-primary);
+      color: #ffffff;
+    }
+
+    .candidates-box {
+      margin-top: 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-2);
+      overflow: hidden;
+    }
+    .candidate-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      gap: 10px;
+    }
+    .candidate-item:last-child { border-bottom: none; }
+    .candidate-item:hover { background: var(--hover); }
+    .candidate-sub {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .artist-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .artist-item {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .artist-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .artist-meta {
+      display: flex;
+      flex-direction: column;
+    }
+    .artist-name { font-weight: 700; }
+    .artist-info { font-size: 0.78rem; color: var(--muted); }
+    .weight-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border);
+      flex-wrap: wrap;
+    }
+    .weight-box input[type="range"] {
+      flex: 1;
+      min-width: 140px;
+      accent-color: var(--accent);
+      height: 24px;
+      cursor: pointer;
+    }
+    .weight-num {
+      width: 68px !important;
+      padding: 6px 8px !important;
+      font-size: 0.88rem !important;
+      text-align: right;
+    }
+    .weight-share {
+      font-size: 0.8rem;
+      color: var(--muted);
+      min-width: 90px;
+      text-align: right;
+    }
+    .status {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 8px;
+      min-height: 1.2em;
+    }
+    .result-list {
+      margin-top: 12px;
+      max-height: 360px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-2);
+    }
+    .track-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.86rem;
+    }
+    .track-row:last-child { border-bottom: none; }
+    .track-artist { color: var(--muted); font-size: 0.8rem; white-space: nowrap; }
+    .badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      margin-left: 6px;
+    }
+    .saved-card {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .saved-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .fusen-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .fusen-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--tag-bg);
+      border: 1px solid var(--tag-border);
+      color: var(--tag-text);
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 0.78rem;
+    }
+    .fusen-chip button {
+      all: unset;
+      cursor: pointer;
+      color: var(--muted);
+      font-weight: 700;
+      padding: 0 2px;
+    }
+    .fusen-chip button:hover { color: var(--text); }
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+    .filter-pill {
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      background: var(--accent-soft);
+      border: 1.5px solid var(--accent-soft-border);
+      color: var(--accent-soft-text);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .filter-pill.active {
+      background: var(--btn-primary);
+      border-color: var(--btn-primary);
+      color: #ffffff;
+    }
+    .step-box {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      font-size: 0.88rem;
+    }
+    .shortcut-get-link {
+      display: inline-block;
+      background: var(--btn-primary);
+      border: 1px solid var(--btn-primary);
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: 0.15s;
+    }
+    .shortcut-get-link:hover {
+      background: var(--btn-primary-hover);
+      border-color: var(--btn-primary-hover);
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>アーティスト単位 プレイリストジェネレーター</h1>
+        <p class="sub">v4.3 — 候補選択・付箋ラベル・テーマ切替・URLコピー導線対応</p>
+      </div>
+      <div class="header-controls">
+        <button id="themeToggleBtn" class="theme-toggle" type="button">ダークモードに切替</button>
+        <nav class="nav-tabs">
+          <button id="tabGenerator" class="nav-tab active" type="button">プレイリスト作成</button>
+          <button id="tabSaved" class="nav-tab" type="button">保存済み一覧 (<span id="savedCountBadge">0</span>)</button>
+          <button id="tabShortcut" class="nav-tab" type="button">ショートカット導入</button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- ==================== 画面1: プレイリスト作成 ==================== -->
+    <main id="viewGenerator">
+      <div class="card">
+        <div class="card-title">
+          <span>1. アーティストを検索・追加</span>
+          <span id="artistCountLabel" style="font-size:0.82rem; color:var(--muted);">選択中: 0組</span>
+        </div>
+        <div class="row">
+          <input id="artistInput" type="text" placeholder="アーティスト名を入力（例: ミセス, ヨルシカ）" />
+          <button id="searchArtistBtn" class="primary" type="button">候補を検索</button>
+        </div>
+        <div id="searchStatus" class="status"></div>
+
+        <div id="candidatesBox" class="candidates-box hidden"></div>
+        <div id="artistList" class="artist-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>2. 合計曲数と配分ルール</span>
+          <span id="ratioSumLabel" class="hidden" style="font-size:0.82rem; color:var(--muted);"></span>
+        </div>
+        <div class="row" style="margin-bottom:14px;">
+          <label for="totalTracksInput" style="font-size:0.9rem;">プレイリスト合計曲数:</label>
+          <input id="totalTracksInput" type="number" min="1" max="500" value="100" />
+          <label style="font-size:0.85rem; color:var(--muted); margin-left:8px; cursor:pointer;">
+            <input id="excludeLiveCheckbox" type="checkbox" checked />
+            通常音源のみ
+          </label>
+        </div>
+
+        <div class="segment-group" role="group" aria-label="配分ルール">
+          <button id="modeEqualBtn" class="segment-btn active" type="button" data-mode="equal">
+            均等配分（デフォルト）
+          </button>
+          <button id="modeRatioBtn" class="segment-btn" type="button" data-mode="ratio">
+            割合を指定する
+          </button>
+        </div>
+
+        <div id="ratioHint" class="status hidden">
+          スライダーまたは数値で重みを指定できます。合計が100%でなくても、入力した比率に合わせて自動按分されます。
+        </div>
+
+        <div style="margin-top: 14px;">
+          <button id="generateBtn" class="primary" type="button">ランダム抽選してプレイリスト生成</button>
+        </div>
+        <div id="genStatus" class="status"></div>
+      </div>
+
+      <div id="resultCard" class="card hidden">
+        <div class="card-title">
+          <span id="resultTitle">生成結果</span>
+          <button id="copyUrlsBtn" class="primary" type="button">ショートカット用にコピー（URL）</button>
+        </div>
+        <div id="resultSummary" class="status" style="margin-top:0; margin-bottom:8px;"></div>
+        <div id="resultList" class="result-list"></div>
+        <div style="margin-top: 12px; display: flex; justify-content: flex-end;">
+          <button id="copyTextBtn" class="small" type="button">テキストを出力（曲名・歌手）</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- ==================== 画面2: 保存済みアーティスト一覧 ==================== -->
+    <section id="viewSaved" class="hidden">
+      <div class="card">
+        <div class="card-title">
+          <span>保存済みアーティスト一覧</span>
+          <div class="row">
+            <button id="addFilteredToGenBtn" class="small primary" type="button">表示中をまとめて選択に追加</button>
+            <button id="clearSavedBtn" class="danger" type="button">全削除</button>
+          </div>
+        </div>
+        <p class="sub" style="margin-bottom:10px;">
+          表示名の変更（例: Tokyo Incidents → 東京事変）や、付箋ラベル（複数可）の追加ができます。
+        </p>
+
+        <div class="filter-bar">
+          <span style="font-size:0.8rem; color:var(--muted);">付箋フィルタ:</span>
+          <div id="filterPills" class="row" style="gap:6px;"></div>
+        </div>
+
+        <div id="savedStatus" class="status"></div>
+        <div id="savedListBox"></div>
+      </div>
+    </section>
+
+    <!-- ==================== 画面3: ショートカット導入 ==================== -->
+    <section id="viewShortcut" class="hidden">
+      <div class="card">
+        <div class="card-title">
+          <span>iPhoneショートカット連携（導入・ダウンロード）</span>
+        </div>
+        <p class="sub" style="margin-bottom:14px;">
+          Webアプリで生成した「ショートカット用にコピー（URL）」をiPhoneのショートカットに渡して、Apple Musicのプレイリストとして自動作成するための案内ページです。
+        </p>
+
+        <div style="margin-bottom: 14px;">
+          <a
+            href="https://www.icloud.com/shortcuts/25c1ad78a3f94667aaa8fa900e22ce54"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="shortcut-get-link"
+          >
+            ショートカットを取得
+          </a>
+        </div>
+
+        <div class="step-box">
+          <div style="font-weight:700; margin-bottom:4px;">使い方（3ステップ）</div>
+          <div style="font-size:0.85rem; color:var(--muted);">
+            1. プレイリスト作成画面で生成し、<strong>「ショートカット用にコピー（URL）」</strong>を押す。<br />
+            2. iPhoneで導入済みの連携ショートカットを実行する（クリップボードのURL一覧を読み込み）。<br />
+            3. Apple Musicに新規プレイリストとして曲が一括追加される。
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const SAVED_KEY = "pm_saved_artists_v3";
+    const THEME_KEY = "pm_theme_v1";
+
+    const state = {
+      artists: [],
+      candidates: [],
+      pendingQueries: [],
+      savedArtists: loadSavedArtists(),
+      activeLabelFilter: "__ALL__",
+      allocMode: "equal",
+      lastGenerated: []
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function applyTheme(theme) {
+      const normalized = theme === "dark" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", normalized);
+      $("themeToggleBtn").textContent =
+        normalized === "dark" ? "ライトモードに切替" : "ダークモードに切替";
+      try {
+        localStorage.setItem(THEME_KEY, normalized);
+      } catch {}
+    }
+
+    function initTheme() {
+      let saved = "light";
+      try {
+        saved = localStorage.getItem(THEME_KEY) || "light";
+      } catch {}
+      applyTheme(saved);
+    }
+
+    function loadSavedArtists() {
+      try {
+        const raw = localStorage.getItem(SAVED_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(parsed)) return [];
+        return parsed.map((a) => ({
+          artistId: a.artistId,
+          apiArtistName: a.apiArtistName || a.artistName || "",
+          displayName: a.displayName || a.artistName || "",
+          primaryGenreName: a.primaryGenreName || "",
+          labels: Array.isArray(a.labels) ? a.labels : []
+        }));
+      } catch {
+        return [];
+      }
+    }
+
+    function persistSavedArtists() {
+      try {
+        localStorage.setItem(SAVED_KEY, JSON.stringify(state.savedArtists));
+      } catch {}
+    }
+
+    function getEffectiveName(artistId, fallbackName) {
+      const saved = state.savedArtists.find((s) => s.artistId === artistId);
+      return (saved && saved.displayName && saved.displayName.trim()) || fallbackName;
+    }
+
+    function upsertSavedArtist({ artistId, apiArtistName, primaryGenreName }) {
+      const existing = state.savedArtists.find((a) => a.artistId === artistId);
+      if (existing) {
+        existing.apiArtistName = apiArtistName || existing.apiArtistName;
+        if (primaryGenreName) existing.primaryGenreName = primaryGenreName;
+        existing.labels = Array.isArray(existing.labels) ? existing.labels : [];
+        state.savedArtists = [existing, ...state.savedArtists.filter((a) => a.artistId !== artistId)];
+      } else {
+        state.savedArtists.unshift({
+          artistId,
+          apiArtistName,
+          displayName: apiArtistName,
+          primaryGenreName: primaryGenreName || "",
+          labels: []
+        });
+      }
+      persistSavedArtists();
+    }
+
+    function getAllLabels() {
+      const set = new Set();
+      state.savedArtists.forEach((a) => {
+        (a.labels || []).forEach((l) => set.add(l));
+      });
+      return Array.from(set);
+    }
+
+    function getFilteredSavedArtists() {
+      if (state.activeLabelFilter === "__ALL__") return state.savedArtists;
+      if (state.activeLabelFilter === "__UNLABELED__") {
+        return state.savedArtists.filter((a) => !a.labels || a.labels.length === 0);
+      }
+      return state.savedArtists.filter((a) => (a.labels || []).includes(state.activeLabelFilter));
+    }
+
+    function renderFilterPills() {
+      const container = $("filterPills");
+      container.innerHTML = "";
+
+      const allLabels = getAllLabels();
+      const pills = [
+        { key: "__ALL__", label: `すべて (${state.savedArtists.length})` },
+        { key: "__UNLABELED__", label: "付箋なし" },
+        ...allLabels.map((lbl) => ({ key: lbl, label: `# ${lbl}` }))
+      ];
+
+      pills.forEach((p) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `filter-pill ${state.activeLabelFilter === p.key ? "active" : ""}`;
+        btn.textContent = p.label;
+        btn.addEventListener("click", () => {
+          state.activeLabelFilter = p.key;
+          renderSavedList();
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function renderSavedList() {
+      $("savedCountBadge").textContent = String(state.savedArtists.length);
+      renderFilterPills();
+
+      const box = $("savedListBox");
+      box.innerHTML = "";
+
+      const list = getFilteredSavedArtists();
+      if (list.length === 0) {
+        box.innerHTML = `<div style="font-size:0.88rem; color:var(--muted);">該当するアーティストはありません。</div>`;
+        return;
+      }
+
+      list.forEach((item) => {
+        const alreadySelected = state.artists.some((a) => a.artistId === item.artistId);
+        const card = document.createElement("div");
+        card.className = "saved-card";
+
+        const labelsHtml = (item.labels || [])
+          .map(
+            (lbl) => `
+            <span class="fusen-chip">
+              <span>${escapeHtml(lbl)}</span>
+              <button type="button" title="付箋を外す" data-del-label="${item.artistId}" data-label-val="${escapeHtml(lbl)}">×</button>
+            </span>
+          `
+          )
+          .join("");
+
+        const showOriginal =
+          item.apiArtistName && item.apiArtistName !== item.displayName
+            ? `（元表記: ${item.apiArtistName}）`
+            : "";
+
+        card.innerHTML = `
+          <div class="saved-top">
+            <div>
+              <div style="font-weight:700; font-size:0.98rem;">
+                ${escapeHtml(item.displayName)}
+                <span style="font-size:0.76rem; color:var(--muted); font-weight:400;">${escapeHtml(showOriginal)}</span>
+              </div>
+              <div class="candidate-sub">${escapeHtml(item.primaryGenreName || "ジャンル不明")}</div>
+            </div>
+            <div class="row">
+              <button class="small ${alreadySelected ? "" : "primary"}" data-add-saved="${item.artistId}" type="button">
+                ${alreadySelected ? "選択中" : "選択に追加"}
+              </button>
+              <button class="small" data-rename-saved="${item.artistId}" type="button">表示名を変更</button>
+              <button class="danger" data-del-saved="${item.artistId}" type="button">削除</button>
+            </div>
+          </div>
+
+          <div class="fusen-row">
+            <span style="font-size:0.76rem; color:var(--muted);">付箋:</span>
+            ${labelsHtml || `<span style="font-size:0.76rem; color:var(--muted);">なし</span>`}
+            <input type="text" placeholder="付箋を追加（例: 移動中）" data-label-input="${item.artistId}" style="max-width:160px; padding:5px 8px; font-size:0.8rem;" />
+            <button class="small" type="button" data-add-label-btn="${item.artistId}">貼る</button>
+          </div>
+        `;
+
+        box.appendChild(card);
+      });
+
+      box.querySelectorAll("[data-add-saved]").forEach((btn) => {
+        btn.addEventListener("click", async (e) => {
+          const id = Number(e.target.dataset.addSaved);
+          const target = state.savedArtists.find((a) => a.artistId === id);
+          if (!target) return;
+          $("savedStatus").textContent = `${target.displayName} を追加中...`;
+          await addArtistToSelection(target.artistId, target.apiArtistName, target.primaryGenreName, false);
+          $("savedStatus").textContent = `${target.displayName} を選択リストに追加しました。`;
+          renderSavedList();
+        });
+      });
+
+      box.querySelectorAll("[data-rename-saved]").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          const id = Number(e.target.dataset.renameSaved);
+          const target = state.savedArtists.find((a) => a.artistId === id);
+          if (!target) return;
+          const nextName = window.prompt(
+            `「${target.apiArtistName}」の表示名を入力してください（空欄で元表記に戻ります）:`,
+            target.displayName
+          );
+          if (nextName === null) return;
+          const trimmed = nextName.trim();
+          target.displayName = trimmed || target.apiArtistName;
+          persistSavedArtists();
+
+          const active = state.artists.find((a) => a.artistId === id);
+          if (active) active.displayName = target.displayName;
+
+          renderSavedList();
+          renderArtists();
+        });
+      });
+
+      box.querySelectorAll("[data-del-saved]").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          const id = Number(e.target.dataset.delSaved);
+          state.savedArtists = state.savedArtists.filter((a) => a.artistId !== id);
+          persistSavedArtists();
+          renderSavedList();
+        });
+      });
+
+      box.querySelectorAll("[data-add-label-btn]").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          const id = Number(e.target.dataset.addLabelBtn);
+          const input = box.querySelector(`[data-label-input="${id}"]`);
+          if (!input) return;
+          const lbl = input.value.trim();
+          if (!lbl) return;
+          const target = state.savedArtists.find((a) => a.artistId === id);
+          if (!target) return;
+          if (!target.labels.includes(lbl)) {
+            target.labels.push(lbl);
+            persistSavedArtists();
+          }
+          input.value = "";
+          renderSavedList();
+        });
+      });
+
+      box.querySelectorAll("[data-del-label]").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          const id = Number(e.target.dataset.delLabel);
+          const lbl = e.target.dataset.labelVal;
+          const target = state.savedArtists.find((a) => a.artistId === id);
+          if (!target) return;
+          target.labels = (target.labels || []).filter((x) => x !== lbl);
+          persistSavedArtists();
+          if (state.activeLabelFilter === lbl) state.activeLabelFilter = "__ALL__";
+          renderSavedList();
+        });
+      });
+    }
+
+    function switchTab(tabName) {
+      $("viewGenerator").classList.toggle("hidden", tabName !== "generator");
+      $("viewSaved").classList.toggle("hidden", tabName !== "saved");
+      $("viewShortcut").classList.toggle("hidden", tabName !== "shortcut");
+
+      $("tabGenerator").classList.toggle("active", tabName === "generator");
+      $("tabSaved").classList.toggle("active", tabName === "saved");
+      $("tabShortcut").classList.toggle("active", tabName === "shortcut");
+
+      if (tabName === "saved") renderSavedList();
+    }
+
+    function setAllocMode(mode) {
+      state.allocMode = mode === "ratio" ? "ratio" : "equal";
+      const isRatio = state.allocMode === "ratio";
+
+      $("modeEqualBtn").classList.toggle("active", !isRatio);
+      $("modeRatioBtn").classList.toggle("active", isRatio);
+
+      $("ratioHint").classList.toggle("hidden", !isRatio);
+      $("ratioSumLabel").classList.toggle("hidden", !isRatio);
+      document.querySelectorAll(".weight-box").forEach((el) => {
+        el.classList.toggle("hidden", !isRatio);
+      });
+      if (isRatio) updateRatioSharesDisplay();
+    }
+
+    function updateRatioSharesDisplay() {
+      const sum = state.artists.reduce((acc, a) => acc + (Number(a.ratio) || 0), 0);
+      $("ratioSumLabel").textContent = `入力合計: ${sum}`;
+
+      document.querySelectorAll(".artist-item").forEach((cardEl, idx) => {
+        const shareEl = cardEl.querySelector(".weight-share");
+        if (!shareEl || !state.artists[idx]) return;
+        const val = Number(state.artists[idx].ratio) || 0;
+        const pct = sum > 0 ? Math.round((val / sum) * 100) : 0;
+        shareEl.textContent = `実質 約${pct}%`;
+      });
+    }
+
+    function isNoiseTrack(trackName) {
+      if (!$("excludeLiveCheckbox").checked) return false;
+      const lower = (trackName || "").toLowerCase();
+      const keywords = [
+        "live", "ライブ", "remix", "リミックス", "instrumental",
+        "インスト", "off vocal", "karaoke", "カラオケ", "edit"
+      ];
+      return keywords.some((kw) => lower.includes(kw));
+    }
+
+    async function searchArtistCandidates(queryName) {
+      const url = `https://itunes.apple.com/search?term=${encodeURIComponent(queryName)}&entity=musicArtist&country=JP&limit=8`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("アーティスト検索に失敗しました");
+      const data = await res.json();
+      return data.results || [];
+    }
+
+    async function fetchTracksByArtistId(artistId) {
+      const songsUrl = `https://itunes.apple.com/lookup?id=${artistId}&entity=song&country=JP&limit=200`;
+      const songsRes = await fetch(songsUrl);
+      if (!songsRes.ok) throw new Error("楽曲一覧の取得に失敗しました");
+      const songsData = await songsRes.json();
+
+      const rawSongs = (songsData.results || []).filter(
+        (item) => item.wrapperType === "track" && item.kind === "song"
+      );
+
+      const uniqueByTitle = new Map();
+      for (const song of rawSongs) {
+        if (isNoiseTrack(song.trackName)) continue;
+        const key = song.trackName.trim().toLowerCase();
+        if (!uniqueByTitle.has(key)) {
+          uniqueByTitle.set(key, {
+            trackId: song.trackId,
+            trackName: song.trackName,
+            artistName: song.artistName,
+            collectionName: song.collectionName,
+            trackViewUrl: song.trackViewUrl
+          });
+        }
+      }
+
+      return Array.from(uniqueByTitle.values());
+    }
+
+    function rebalanceDefaultRatios() {
+      if (state.artists.length === 0) return;
+      const base = Math.floor(100 / state.artists.length);
+      let rem = 100 - base * state.artists.length;
+      state.artists.forEach((a, idx) => {
+        a.ratio = base + (idx < rem ? 1 : 0);
+      });
+    }
+
+    function renderArtists() {
+      $("artistCountLabel").textContent = `選択中: ${state.artists.length}組`;
+      const listEl = $("artistList");
+      listEl.innerHTML = "";
+      const isRatio = state.allocMode === "ratio";
+
+      state.artists.forEach((artist, index) => {
+        const shownName = getEffectiveName(artist.artistId, artist.displayName || artist.apiArtistName);
+        const row = document.createElement("div");
+        row.className = "artist-item";
+        row.innerHTML = `
+          <div class="artist-top">
+            <div class="artist-meta">
+              <span class="artist-name">${escapeHtml(shownName)}</span>
+              <span class="artist-info">取得可能: ${artist.tracks.length}曲（ユニーク曲ベース）</span>
+            </div>
+            <button class="danger" data-remove="${index}" type="button">外す</button>
+          </div>
+          <div class="weight-box ${isRatio ? "" : "hidden"}">
+            <span style="font-size:0.84rem; color:var(--muted);">割合:</span>
+            <input type="range" min="0" max="100" value="${artist.ratio}" data-range="${index}" />
+            <input type="number" min="0" max="999" value="${artist.ratio}" class="weight-num" data-num="${index}" />
+            <span class="weight-share"></span>
+          </div>
+        `;
+        listEl.appendChild(row);
+      });
+
+      listEl.querySelectorAll("[data-range]").forEach((rangeEl) => {
+        rangeEl.addEventListener("input", (e) => {
+          const idx = Number(e.target.dataset.range);
+          const val = Math.max(0, Number(e.target.value) || 0);
+          state.artists[idx].ratio = val;
+          const numEl = listEl.querySelector(`[data-num="${idx}"]`);
+          if (numEl) numEl.value = val;
+          updateRatioSharesDisplay();
+        });
+      });
+
+      listEl.querySelectorAll("[data-num]").forEach((numEl) => {
+        numEl.addEventListener("input", (e) => {
+          const idx = Number(e.target.dataset.num);
+          const val = Math.max(0, Number(e.target.value) || 0);
+          state.artists[idx].ratio = val;
+          const rangeEl = listEl.querySelector(`[data-range="${idx}"]`);
+          if (rangeEl) rangeEl.value = Math.min(100, val);
+          updateRatioSharesDisplay();
+        });
+      });
+
+      listEl.querySelectorAll("[data-remove]").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          const idx = Number(e.target.dataset.remove);
+          state.artists.splice(idx, 1);
+          rebalanceDefaultRatios();
+          renderArtists();
+          renderSavedList();
+        });
+      });
+
+      if (isRatio) updateRatioSharesDisplay();
+    }
+
+    function renderCandidates(list, queryLabel = "") {
+      const box = $("candidatesBox");
+      box.innerHTML = "";
+      if (!list || list.length === 0) {
+        box.classList.add("hidden");
+        return;
+      }
+      box.classList.remove("hidden");
+
+      if (queryLabel) {
+        const header = document.createElement("div");
+        header.className = "candidate-item";
+        header.style.cursor = "default";
+        header.style.background = "var(--panel)";
+        header.innerHTML = `<div style="font-size:0.8rem; font-weight:700; color:var(--muted);">検索ワード: 「${escapeHtml(queryLabel)}」の候補</div>`;
+        box.appendChild(header);
+      }
+
+      list.forEach((item) => {
+        const div = document.createElement("div");
+        div.className = "candidate-item";
+        div.innerHTML = `
+          <div>
+            <div style="font-weight:700;">${escapeHtml(item.artistName)}</div>
+            <div class="candidate-sub">${escapeHtml(item.primaryGenreName || "ジャンル不明")}</div>
+          </div>
+          <button type="button">これを選ぶ</button>
+        `;
+        div.addEventListener("click", () => {
+          selectCandidate(item.artistId, item.artistName, item.primaryGenreName || "");
+        });
+        box.appendChild(div);
+      });
+    }
+
+    async function runSingleQuerySearch(query, remainCount = 0) {
+      $("searchArtistBtn").disabled = true;
+      $("searchStatus").textContent =
+        remainCount > 0
+          ? `「${query}」の候補を検索中...（ほか ${remainCount}件待ち）`
+          : `「${query}」の候補を検索中...`;
+      $("candidatesBox").classList.add("hidden");
+
+      try {
+        const candidates = await searchArtistCandidates(query);
+        if (candidates.length === 0) {
+          $("searchStatus").textContent = `「${query}」に一致する候補が見つかりませんでした。`;
+          if (state.pendingQueries.length > 0) {
+            const nextQuery = state.pendingQueries.shift();
+            await runSingleQuerySearch(nextQuery, state.pendingQueries.length);
+          }
+          return;
+        }
+        state.candidates = candidates;
+        renderCandidates(candidates, query);
+        $("searchStatus").textContent = `「${query}」の候補が${candidates.length}件見つかりました。追加したいアーティストを選んでください。`;
+      } catch (err) {
+        $("searchStatus").textContent = err.message;
+      } finally {
+        $("searchArtistBtn").disabled = false;
+      }
+    }
+
+    async function handleSearchArtist() {
+      const raw = $("artistInput").value.trim();
+      if (!raw) return;
+
+      const queries = raw
+        .split(/[,、\n]+/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      if (queries.length === 0) return;
+
+      const firstQuery = queries.shift();
+      state.pendingQueries = queries;
+      await runSingleQuerySearch(firstQuery, state.pendingQueries.length);
+    }
+
+    async function addArtistToSelection(artistId, apiArtistName, primaryGenreName = "") {
+      const effectiveName = getEffectiveName(artistId, apiArtistName);
+      if (state.artists.some((a) => a.artistId === artistId)) {
+        return { already: true, name: effectiveName, count: 0 };
+      }
+      const tracks = await fetchTracksByArtistId(artistId);
+      state.artists.push({
+        artistId,
+        apiArtistName,
+        displayName: effectiveName,
+        tracks,
+        ratio: 0
+      });
+      rebalanceDefaultRatios();
+      renderArtists();
+      return { already: false, name: effectiveName, count: tracks.length };
+    }
+
+    async function selectCandidate(artistId, apiArtistName, primaryGenreName = "") {
+      upsertSavedArtist({ artistId, apiArtistName, primaryGenreName });
+      const effectiveName = getEffectiveName(artistId, apiArtistName);
+
+      if (state.artists.some((a) => a.artistId === artistId)) {
+        $("searchStatus").textContent = `${effectiveName} はすでに選択中です（保存一覧には反映済み）。`;
+        renderSavedList();
+      } else {
+        $("searchStatus").textContent = `${effectiveName} の楽曲を取得中...`;
+        try {
+          const resInfo = await addArtistToSelection(artistId, apiArtistName, primaryGenreName);
+          renderSavedList();
+          $("searchStatus").textContent = `${resInfo.name} を追加しました（抽出候補 ${resInfo.count}曲）。`;
+        } catch (err) {
+          $("searchStatus").textContent = err.message;
+        }
+      }
+
+      if (state.pendingQueries.length > 0) {
+        const nextQuery = state.pendingQueries.shift();
+        await runSingleQuerySearch(nextQuery, state.pendingQueries.length);
+      } else {
+        $("candidatesBox").classList.add("hidden");
+        $("artistInput").value = "";
+      }
+    }
+
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function computeTargetCounts(totalTracks) {
+      const k = state.artists.length;
+      const targets = new Array(k).fill(0);
+
+      if (state.allocMode === "equal") {
+        const base = Math.floor(totalTracks / k);
+        let rem = totalTracks - base * k;
+        const order = shuffleArray([...Array(k).keys()]);
+        for (let i = 0; i < k; i++) {
+          targets[i] = base + (order.indexOf(i) < rem ? 1 : 0);
+        }
+      } else {
+        const sumRatio = state.artists.reduce((acc, a) => acc + (Number(a.ratio) || 0), 0);
+        if (sumRatio <= 0) {
+          throw new Error("割合の合計が0です。スライダーや数値を設定してください。");
+        }
+        const exacts = state.artists.map((a) => ((Number(a.ratio) || 0) / sumRatio) * totalTracks);
+        const floors = exacts.map((x) => Math.floor(x));
+        let rem = totalTracks - floors.reduce((a, b) => a + b, 0);
+
+        const remainders = exacts
+          .map((x, idx) => ({ idx, frac: x - floors[idx] }))
+          .sort((a, b) => b.frac - a.frac);
+
+        for (let i = 0; i < k; i++) {
+          targets[i] = floors[i];
+        }
+        for (let i = 0; i < remainders.length && rem > 0; i++) {
+          targets[remainders[i].idx] += 1;
+          rem -= 1;
+        }
+      }
+
+      return targets;
+    }
+
+    function pickTracksForArtist(tracks, targetCount, allowDuplicate) {
+      if (targetCount <= 0 || !Array.isArray(tracks) || tracks.length === 0) return [];
+      const pool = shuffleArray(tracks);
+
+      if (tracks.length >= targetCount) {
+        return pool.slice(0, targetCount).map((t) => ({ ...t, isDuplicate: false }));
+      }
+
+      const result = pool.map((t) => ({ ...t, isDuplicate: false }));
+      if (!allowDuplicate) {
+        return result;
+      }
+
+      const needed = targetCount - result.length;
+      for (let i = 0; i < needed; i++) {
+        const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
+        result.push({ ...randomTrack, isDuplicate: true });
+      }
+      return result;
+    }
+
+    function handleGenerate() {
+      $("genStatus").textContent = "";
+
+      if (state.artists.length === 0) {
+        $("genStatus").textContent = "先にアーティストを1組以上追加してください。";
+        return;
+      }
+
+      const totalTracks = Math.max(1, Math.min(500, Number($("totalTracksInput").value) || 100));
+      $("totalTracksInput").value = totalTracks;
+
+      let targets;
+      try {
+        targets = computeTargetCounts(totalTracks);
+      } catch (err) {
+        $("genStatus").textContent = err.message;
+        return;
+      }
+
+      const shortageArtists = [];
+      state.artists.forEach((artist, idx) => {
+        const shownName = getEffectiveName(artist.artistId, artist.displayName || artist.apiArtistName);
+        if (artist.tracks.length < targets[idx]) {
+          shortageArtists.push(
+            `${shownName}（必要: ${targets[idx]}曲 / 取得可能: ${artist.tracks.length}曲）`
+          );
+        }
+      });
+
+      let allowDuplicate = false;
+      if (shortageArtists.length > 0) {
+        const msg =
+          `目標曲数に満たないアーティストがあります。\n重複しますがよろしいですか？\n\n` +
+          shortageArtists.join("\n");
+        allowDuplicate = window.confirm(msg);
+      }
+
+      let combined = [];
+      state.artists.forEach((artist, idx) => {
+        const picked = pickTracksForArtist(artist.tracks, targets[idx], allowDuplicate);
+        combined = combined.concat(picked);
+      });
+
+      const finalPlaylist = shuffleArray(combined);
+      state.lastGenerated = finalPlaylist;
+
+      renderResult(finalPlaylist, totalTracks, shortageArtists.length > 0, allowDuplicate);
+    }
+
+    function renderResult(tracks, requestedTotal, hadShortage, allowDuplicate) {
+      $("resultCard").classList.remove("hidden");
+      $("resultTitle").textContent = `生成結果（${tracks.length}曲）`;
+
+      const dupCount = tracks.filter((t) => t.isDuplicate).length;
+      let summary = `指定: ${requestedTotal}曲 → 生成: ${tracks.length}曲`;
+      if (hadShortage) {
+        summary += allowDuplicate
+          ? `（不足分を重複ありで補完: 重複${dupCount}曲）`
+          : `（重複なしのため取得可能数のみで生成）`;
+      }
+      $("resultSummary").textContent = summary;
+
+      const listEl = $("resultList");
+      listEl.innerHTML = "";
+
+      tracks.forEach((t, i) => {
+        const row = document.createElement("div");
+        row.className = "track-row";
+        row.innerHTML = `
+          <div>
+            <span style="color:var(--muted); margin-right:8px;">${i + 1}.</span>
+            <strong>${escapeHtml(t.trackName)}</strong>
+            ${t.isDuplicate ? `<span class="badge">重複</span>` : ""}
+          </div>
+          <div class="track-artist">${escapeHtml(t.artistName)}</div>
+        `;
+        listEl.appendChild(row);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    async function copyToClipboard(text, label) {
+      if (!text) {
+        $("genStatus").textContent = "コピーできるデータがありません。先にプレイリストを生成してください。";
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(text);
+        $("genStatus").textContent = `${label}をクリップボードにコピーしました。`;
+      } catch {
+        $("genStatus").textContent = "クリップボードへのコピーに失敗しました。";
+      }
+    }
+
+    $("themeToggleBtn").addEventListener("click", () => {
+      const current = document.documentElement.getAttribute("data-theme") || "light";
+      applyTheme(current === "dark" ? "light" : "dark");
+    });
+
+    $("tabGenerator").addEventListener("click", () => switchTab("generator"));
+    $("tabSaved").addEventListener("click", () => switchTab("saved"));
+    $("tabShortcut").addEventListener("click", () => switchTab("shortcut"));
+
+    $("modeEqualBtn").addEventListener("click", () => setAllocMode("equal"));
+    $("modeRatioBtn").addEventListener("click", () => setAllocMode("ratio"));
+
+    $("searchArtistBtn").addEventListener("click", handleSearchArtist);
+    $("artistInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleSearchArtist();
+    });
+
+    $("addFilteredToGenBtn").addEventListener("click", async () => {
+      const targets = getFilteredSavedArtists();
+      if (targets.length === 0) return;
+      $("savedStatus").textContent = "表示中のアーティストを追加中...";
+      try {
+        for (const item of targets) {
+          if (!state.artists.some((a) => a.artistId === item.artistId)) {
+            await addArtistToSelection(item.artistId, item.apiArtistName, item.primaryGenreName);
+          }
+        }
+        $("savedStatus").textContent = "追加が完了しました。";
+        renderSavedList();
+      } catch (err) {
+        $("savedStatus").textContent = err.message;
+      }
+    });
+
+    $("clearSavedBtn").addEventListener("click", () => {
+      if (!window.confirm("保存済みアーティスト一覧をすべて削除しますか？")) return;
+      state.savedArtists = [];
+      state.activeLabelFilter = "__ALL__";
+      persistSavedArtists();
+      renderSavedList();
+      $("savedStatus").textContent = "保存済み一覧をクリアしました。";
+    });
+
+    $("generateBtn").addEventListener("click", handleGenerate);
+
+    $("copyUrlsBtn").addEventListener("click", () => {
+      const urls = state.lastGenerated.map((t) => t.trackViewUrl).filter(Boolean).join("\n");
+      copyToClipboard(urls, `ショートカット用URL一覧（${state.lastGenerated.length}曲）`);
+    });
+
+    $("copyTextBtn").addEventListener("click", () => {
+      const lines = state.lastGenerated.map((t, i) => `${i + 1}. ${t.trackName} - ${t.artistName}`).join("\n");
+      copyToClipboard(lines, `曲名・歌手テキスト（${state.lastGenerated.length}曲）`);
+    });
+
+    initTheme();
+    renderSavedList();
+  </script>
+</body>
+</html>
