@@ -494,7 +494,7 @@
       <div id="resultCard" class="card hidden">
         <div class="card-title">
           <span id="resultTitle">生成結果</span>
-          <button id="copyUrlsBtn" class="primary" type="button">ショートカット用にコピー（URL）</button>
+          <button id="copyUrlsBtn" class="primary" type="button">ショートカット用にコピー</button>
         </div>
         <div id="resultSummary" class="status" style="margin-top:0; margin-bottom:8px;"></div>
         <div id="resultList" class="result-list"></div>
@@ -551,10 +551,15 @@
 
         <div class="step-box">
           <div style="font-weight:700; margin-bottom:4px;">使い方（3ステップ）</div>
-          <div style="font-size:0.85rem; color:var(--muted);">
-            1. プレイリスト作成画面で生成し、<strong>「ショートカット用にコピー（URL）」</strong>を押す。<br />
-            2. iPhoneで導入済みの連携ショートカットを実行する（クリップボードのURL一覧を読み込み）。<br />
-            3. Apple Musicに新規プレイリストとして曲が一括追加される。
+          <div class="step-box">
+  <div style="font-weight:700; margin-bottom:4px;">使い方（3ステップ）</div>
+  <div style="font-size:0.85rem; color:var(--muted);">
+    1. プレイリスト作成画面で生成し、<strong>「ショートカット用にコピー」</strong>を押す。<br />
+    2. iPhoneで導入済みの連携ショートカットを実行する。<br />
+    3. 見つかった曲が新規プレイリストに順番に追加される。
+  </div>
+</div>
+
           </div>
         </div>
       </div>
@@ -1315,9 +1320,13 @@
     $("generateBtn").addEventListener("click", handleGenerate);
 
     $("copyUrlsBtn").addEventListener("click", () => {
-      const urls = state.lastGenerated.map((t) => t.trackViewUrl).filter(Boolean).join("\n");
-      copyToClipboard(urls, `ショートカット用URL一覧（${state.lastGenerated.length}曲）`);
-    });
+  const lines = state.lastGenerated
+    .map((t) => `${t.trackName || ""} ${t.artistName || ""}`.trim())
+    .filter(Boolean)
+    .join("\n");
+  copyToClipboard(lines, `ショートカット用リスト（${state.lastGenerated.length}曲）`);
+});
+
 
     $("copyTextBtn").addEventListener("click", () => {
       const lines = state.lastGenerated.map((t, i) => `${i + 1}. ${t.trackName} - ${t.artistName}`).join("\n");
